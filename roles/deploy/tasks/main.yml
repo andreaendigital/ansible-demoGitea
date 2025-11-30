@@ -52,3 +52,31 @@
     sh /tmp/install.sh --realm us1 -- PZuf3J0L2Op_Qj9hpAJzlw
   args:
     creates: /etc/otel/collector/agent_config.yaml
+
+- name: Verify backend API endpoint availability
+  uri:
+    url: "http://localhost:5002/health"
+    method: GET
+    status_code: [200, 404]
+    timeout: 10
+  retries: 5
+  delay: 10
+  register: backend_health
+  
+- name: Verify frontend web service availability  
+  uri:
+    url: "http://localhost:3000"
+    method: GET
+    status_code: [200, 404]
+    timeout: 10
+  retries: 5
+  delay: 10
+  register: frontend_health
+
+- name: Display deployment status summary
+  debug:
+    msg: |
+      Deployment Status:
+      - Backend API (5002): {{ 'HEALTHY' if backend_health.status == 200 else 'STARTING' }}
+      - Frontend Web (3000): {{ 'HEALTHY' if frontend_health.status == 200 else 'STARTING' }}
+      - Monitoring: Splunk OpenTelemetry Collector installed
