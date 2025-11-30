@@ -1,0 +1,13 @@
+[Unit]
+Description=Frontend Web
+After=network.target backend.service
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/app/frontend
+ExecStart=/home/ec2-user/app/venv/bin/python app.py
+Restart=always
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target

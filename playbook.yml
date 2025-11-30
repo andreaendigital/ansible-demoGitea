@@ -1,0 +1,5 @@
+---
+- hosts: infraCar
+  become: yes
+  roles:
+    - deploy

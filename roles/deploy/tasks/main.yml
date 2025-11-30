@@ -1,0 +1,54 @@
+---
+- name: Update packages
+  yum:
+    name: '*'
+    state: latest
+
+- name: Install dependencies
+  yum:
+    name: [python3, python3-pip, git, curl]
+    state: present
+
+- name: Clone app
+  git:
+    repo: https://github.com/andreaendigital/CarPricePredictor-Demo.git
+    dest: /home/ec2-user/app
+    version: main
+  become_user: ec2-user
+
+- name: Create venv
+  command: python3 -m venv /home/ec2-user/app/venv
+  become_user: ec2-user
+
+- name: Install app
+  pip:
+    name: /home/ec2-user/app
+    virtualenv: /home/ec2-user/app/venv
+    editable: yes
+    extra_args: "[dev]"
+  become_user: ec2-user
+
+- name: Backend service
+  template:
+    src: backend.service
+    dest: /etc/systemd/system/backend.service
+
+- name: Frontend service
+  template:
+    src: frontend.service
+    dest: /etc/systemd/system/frontend.service
+
+- name: Start services
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  loop: [backend, frontend]
+
+- name: Install monitoring
+  shell: |
+    curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/install.sh
+    sh /tmp/install.sh --realm us1 -- PZuf3J0L2Op_Qj9hpAJzlw
+  args:
+    creates: /etc/otel/collector/agent_config.yaml
