@@ -155,3 +155,5 @@ This project is developed for educational purposes as part of DevOps coursework.
 **Author**: DevOps Engineering Student  
 **Course**: Infrastructure as Code & Configuration Management  
 **Institution**: [Your Institution Name]
+
+<!-- Version: 1.0.1 - Updated GitHub templates -->
