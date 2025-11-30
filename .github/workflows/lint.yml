@@ -10,5 +10,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Install ansible-lint
+      run: pip install ansible-lint
+    
     - name: Run ansible-lint
-      uses: ansible/ansible-lint-action@main
+      run: ansible-lint
