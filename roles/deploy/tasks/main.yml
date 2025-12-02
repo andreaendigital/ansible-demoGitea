@@ -6,7 +6,7 @@
 
 - name: Install dependencies
   yum:
-    name: [git, wget, tar, sqlite]
+    name: [git, wget, tar]
     state: present
 
 - name: Create git group
@@ -41,7 +41,46 @@
       }
     - { path: "/var/lib/gitea/data", owner: "git", group: "git", mode: "0750" }
     - { path: "/var/lib/gitea/log", owner: "git", group: "git", mode: "0750" }
+    - {
+        path: "/var/lib/gitea/data/gitea-repositories",
+        owner: "git",
+        group: "git",
+        mode: "0750",
+      }
     - { path: "/etc/gitea", owner: "root", group: "git", mode: "0770" }
+
+- name: Generate Gitea secret key
+  command: /usr/local/bin/gitea generate secret SECRET_KEY
+  register: gitea_secret_key_output
+  changed_when: false
+  ignore_errors: yes
+
+- name: Generate Gitea internal token
+  command: /usr/local/bin/gitea generate secret INTERNAL_TOKEN
+  register: gitea_internal_token_output
+  changed_when: false
+  ignore_errors: yes
+
+- name: Set secret key fact
+  set_fact:
+    gitea_secret_key: "{{ gitea_secret_key_output.stdout if gitea_secret_key_output.rc == 0 else 'CHANGE_ME_SECRET_KEY_' + ansible_date_time.epoch }}"
+    gitea_internal_token: "{{ gitea_internal_token_output.stdout if gitea_internal_token_output.rc == 0 else 'CHANGE_ME_INTERNAL_TOKEN_' + ansible_date_time.epoch }}"
+
+- name: Wait for RDS MySQL to be available
+  wait_for:
+    host: "{{ rds_address }}"
+    port: 3306
+    timeout: 60
+    delay: 5
+  when: rds_address is defined
+
+- name: Deploy Gitea configuration (app.ini) with RDS MySQL
+  template:
+    src: app.ini.j2
+    dest: /etc/gitea/app.ini
+    owner: root
+    group: git
+    mode: "0640"
 
 - name: Download Gitea binary (v{{ gitea_version }})
   get_url:
@@ -94,26 +133,25 @@
 - name: Display deployment status summary
   debug:
     msg: |
-      Gitea Deployment Complete!
+      infraGitea Deployment Complete!
       - Gitea Service (3000): {{ 'HEALTHY' if gitea_health.status == 200 else 'STARTING' }}
       - SystemD Service: {{ gitea_service_status.status.ActiveState }}
       - Version: {{ gitea_version }}
       - User: git (system user)
       - Data Directory: /var/lib/gitea
       - Config: /etc/gitea/app.ini
-      - Database: SQLite (builtin)
+      - Database: MySQL (RDS)
+      - RDS Endpoint: {{ rds_endpoint }}
+      - Database Name: {{ mysql_dbname }}
       - Service Management:
         * sudo systemctl status gitea
         * sudo systemctl restart gitea
         * sudo systemctl stop gitea
       - Access Gitea at: http://{{ ansible_default_ipv4.address }}:3000
 
-      Next Steps:
-      1. Open http://{{ ansible_default_ipv4.address }}:3000 in browser
-      2. Complete initial setup:
-         * Database: SQLite (already configured)
-         * Admin user: Create your admin account
-         * Site settings: Configure as needed
-      3. Start using your Git service!
-
+      Gitea is READY TO USE!
+      - Database is pre-configured with RDS MySQL
+      - No manual setup required
+      - Access via Load Balancer for production use
+      
       Service runs automatically at boot via systemd
