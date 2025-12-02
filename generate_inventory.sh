@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navega a la carpeta de Terraform
-cd ../tf-infra-demoCar/infra || exit 1
+cd ../TF-INFRA-DEMOGITEA/infra || exit 1
 
 terraform init -reconfigure -backend=true
 
@@ -15,12 +15,12 @@ if [[ -z "$EC2_IP" ]]; then
 fi
 
 # Return to the project's root
-cd ..
+cd ../../ANSIBLE-DEMOGITEA
 
 # Generate the inventory.ini file for Ansible
-cat <<EOF > configManagement-carPrice/inventory.ini
-[infraCar]
-ec2-gitea ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
-EOF
+cat <<EOF2 > inventory.ini
+[infraGitea]
+ec2-instance ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
+EOF2
 
 echo "inventory.ini file generated with IP: $EC2_IP"
