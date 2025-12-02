@@ -1,12 +1,12 @@
 ---
 - name: Update packages
   yum:
-    name: '*'
+    name: "*"
     state: latest
 
 - name: Install dependencies
   yum:
-    name: [git, curl, wget, tar, sqlite]
+    name: [git, wget, tar, sqlite]
     state: present
 
 - name: Create git group
@@ -19,7 +19,7 @@
     name: git
     system: yes
     shell: /bin/bash
-    comment: 'Git Version Control'
+    comment: "Git Version Control"
     group: git
     home: /home/git
     create_home: yes
@@ -32,17 +32,22 @@
     group: "{{ item.group }}"
     mode: "{{ item.mode }}"
   loop:
-    - { path: '/var/lib/gitea', owner: 'git', group: 'git', mode: '0750' }
-    - { path: '/var/lib/gitea/custom', owner: 'git', group: 'git', mode: '0750' }
-    - { path: '/var/lib/gitea/data', owner: 'git', group: 'git', mode: '0750' }
-    - { path: '/var/lib/gitea/log', owner: 'git', group: 'git', mode: '0750' }
-    - { path: '/etc/gitea', owner: 'root', group: 'git', mode: '0770' }
+    - { path: "/var/lib/gitea", owner: "git", group: "git", mode: "0750" }
+    - {
+        path: "/var/lib/gitea/custom",
+        owner: "git",
+        group: "git",
+        mode: "0750",
+      }
+    - { path: "/var/lib/gitea/data", owner: "git", group: "git", mode: "0750" }
+    - { path: "/var/lib/gitea/log", owner: "git", group: "git", mode: "0750" }
+    - { path: "/etc/gitea", owner: "root", group: "git", mode: "0770" }
 
 - name: Download Gitea binary (v{{ gitea_version }})
   get_url:
     url: https://dl.gitea.com/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64
     dest: /usr/local/bin/gitea
-    mode: '0755'
+    mode: "0755"
     owner: root
     group: root
 
@@ -54,7 +59,7 @@
 - name: Set GITEA_WORK_DIR environment
   lineinfile:
     path: /etc/environment
-    line: 'GITEA_WORK_DIR=/var/lib/gitea'
+    line: "GITEA_WORK_DIR=/var/lib/gitea"
     create: yes
 
 - name: Enable and start Gitea service (systemd)
@@ -102,7 +107,7 @@
         * sudo systemctl restart gitea
         * sudo systemctl stop gitea
       - Access Gitea at: http://{{ ansible_default_ipv4.address }}:3000
-      
+
       Next Steps:
       1. Open http://{{ ansible_default_ipv4.address }}:3000 in browser
       2. Complete initial setup:
@@ -110,5 +115,5 @@
          * Admin user: Create your admin account
          * Site settings: Configure as needed
       3. Start using your Git service!
-      
+
       Service runs automatically at boot via systemd
