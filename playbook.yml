@@ -1,5 +1,4 @@
 ---
-- hosts: infraCar
+- hosts: infraGitea
   become: yes
   roles:
-    - deploy
