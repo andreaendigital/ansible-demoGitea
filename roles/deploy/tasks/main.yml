@@ -9,10 +9,6 @@
     name: [git, curl, wget, tar, sqlite]
     state: present
 
-- name: Check Git version
-  command: git --version
-  register: git_version
-
 - name: Create git group
   group:
     name: git
@@ -42,9 +38,9 @@
     - { path: '/var/lib/gitea/log', owner: 'git', group: 'git', mode: '0750' }
     - { path: '/etc/gitea', owner: 'root', group: 'git', mode: '0770' }
 
-- name: Download Gitea binary (v1.25.2)
+- name: Download Gitea binary (v{{ gitea_version }})
   get_url:
-    url: https://dl.gitea.com/gitea/1.25.2/gitea-1.25.2-linux-amd64
+    url: https://dl.gitea.com/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64
     dest: /usr/local/bin/gitea
     mode: '0755'
     owner: root
@@ -84,7 +80,7 @@
   uri:
     url: "http://localhost:3000"
     method: GET
-    status_code: [200, 404]
+    status_code: 200
     timeout: 10
   retries: 5
   delay: 10
@@ -96,7 +92,7 @@
       Gitea Deployment Complete!
       - Gitea Service (3000): {{ 'HEALTHY' if gitea_health.status == 200 else 'STARTING' }}
       - SystemD Service: {{ gitea_service_status.status.ActiveState }}
-      - Version: 1.25.2
+      - Version: {{ gitea_version }}
       - User: git (system user)
       - Data Directory: /var/lib/gitea
       - Config: /etc/gitea/app.ini

@@ -20,7 +20,7 @@ cd ../../ANSIBLE-DEMOGITEA
 # Generate the inventory.ini file for Ansible
 cat <<EOF2 > inventory.ini
 [infraGitea]
-ec2-instance ansible_host=$EC2_IP ansible_user=ec2-user
+ec2-instance ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
 EOF2
 
 echo "inventory.ini file generated with IP: $EC2_IP"
