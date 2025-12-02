@@ -10,7 +10,14 @@ Group=git
 WorkingDirectory=/var/lib/gitea/
 ExecStart=/usr/local/bin/gitea web -c /etc/gitea/app.ini
 Restart=always
+RestartSec=2s
 Environment=USER=git HOME=/home/git GITEA_WORK_DIR=/var/lib/gitea
+# Security settings
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/gitea /etc/gitea
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target

@@ -49,22 +49,28 @@
       }
     - { path: "/etc/gitea", owner: "root", group: "git", mode: "0770" }
 
+- name: Download Gitea binary (v{{ gitea_version }})
+  get_url:
+    url: https://dl.gitea.com/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64
+    dest: /usr/local/bin/gitea
+    mode: "0755"
+    owner: root
+    group: root
+
 - name: Generate Gitea secret key
   command: /usr/local/bin/gitea generate secret SECRET_KEY
   register: gitea_secret_key_output
   changed_when: false
-  ignore_errors: yes
 
 - name: Generate Gitea internal token
   command: /usr/local/bin/gitea generate secret INTERNAL_TOKEN
   register: gitea_internal_token_output
   changed_when: false
-  ignore_errors: yes
 
 - name: Set secret key fact
   set_fact:
-    gitea_secret_key: "{{ gitea_secret_key_output.stdout if gitea_secret_key_output.rc == 0 else 'CHANGE_ME_SECRET_KEY_' + ansible_date_time.epoch }}"
-    gitea_internal_token: "{{ gitea_internal_token_output.stdout if gitea_internal_token_output.rc == 0 else 'CHANGE_ME_INTERNAL_TOKEN_' + ansible_date_time.epoch }}"
+    gitea_secret_key: "{{ gitea_secret_key_output.stdout }}"
+    gitea_internal_token: "{{ gitea_internal_token_output.stdout }}"
 
 - name: Wait for RDS MySQL to be available
   wait_for:
@@ -81,14 +87,6 @@
     owner: root
     group: git
     mode: "0640"
-
-- name: Download Gitea binary (v{{ gitea_version }})
-  get_url:
-    url: https://dl.gitea.com/gitea/{{ gitea_version }}/gitea-{{ gitea_version }}-linux-amd64
-    dest: /usr/local/bin/gitea
-    mode: "0755"
-    owner: root
-    group: root
 
 - name: Create Gitea service
   template:
@@ -115,6 +113,28 @@
     delay: 5
     timeout: 60
 
+- name: Create initial admin user (optional)
+  command: >
+    /usr/local/bin/gitea admin user create
+    --username {{ gitea_admin_username }}
+    --password {{ gitea_admin_password }}
+    --email {{ gitea_admin_email }}
+    --admin
+    -c /etc/gitea/app.ini
+  become: yes
+  become_user: git
+  environment:
+    GITEA_WORK_DIR: /var/lib/gitea
+  when:
+    - gitea_admin_username is defined
+    - gitea_admin_password is defined
+    - gitea_admin_email is defined
+  register: admin_creation
+  failed_when:
+    - admin_creation.rc != 0
+    - "'user already exists' not in admin_creation.stderr"
+  changed_when: admin_creation.rc == 0
+
 - name: Verify Gitea service status
   systemd:
     name: gitea
@@ -133,25 +153,55 @@
 - name: Display deployment status summary
   debug:
     msg: |
-      infraGitea Deployment Complete!
-      - Gitea Service (3000): {{ 'HEALTHY' if gitea_health.status == 200 else 'STARTING' }}
+      ═══════════════════════════════════════════════════════════════
+      ✅ infraGitea Deployment Complete - FULLY CONFIGURED
+      ═══════════════════════════════════════════════════════════════
+
+      📊 Service Status:
+      - Gitea Web (3000): {{ 'HEALTHY ✓' if gitea_health.status == 200 else 'STARTING...' }}
       - SystemD Service: {{ gitea_service_status.status.ActiveState }}
       - Version: {{ gitea_version }}
-      - User: git (system user)
-      - Data Directory: /var/lib/gitea
-      - Config: /etc/gitea/app.ini
-      - Database: MySQL (RDS)
+      - Auto-Start: ENABLED (boots automatically)
+
+      🔧 Configuration:
+      - Database: MySQL (RDS) - CONFIGURED ✓
       - RDS Endpoint: {{ rds_endpoint }}
       - Database Name: {{ mysql_dbname }}
-      - Service Management:
-        * sudo systemctl status gitea
-        * sudo systemctl restart gitea
-        * sudo systemctl stop gitea
-      - Access Gitea at: http://{{ ansible_default_ipv4.address }}:3000
+      - Install Lock: ENABLED (no web installer)
+      - Secret Keys: GENERATED ✓
 
-      Gitea is READY TO USE!
-      - Database is pre-configured with RDS MySQL
-      - No manual setup required
-      - Access via Load Balancer for production use
-      
-      Service runs automatically at boot via systemd
+      📁 Directories:
+      - Working Dir: /var/lib/gitea
+      - Config File: /etc/gitea/app.ini
+      - Log Files: /var/lib/gitea/log
+      - Repositories: /var/lib/gitea/data/gitea-repositories
+
+      👤 System User:
+      - User: git
+      - Group: git
+      - Home: /home/git
+
+      {% if gitea_admin_username is defined %}
+      🔐 Admin User:
+      - Username: {{ gitea_admin_username }}
+      - Email: {{ gitea_admin_email }}
+      - Created: {{ 'YES ✓' if admin_creation.rc == 0 else 'Already exists' }}
+      {% else %}
+      🔐 Admin User:
+      - First user to register will become admin
+      - Registration is open (DISABLE_REGISTRATION = false)
+      {% endif %}
+
+      🌐 Access:
+      - Direct: http://{{ ansible_default_ipv4.address }}:3000
+      - Via Load Balancer: (use ALB DNS when available)
+
+      🛠️ Service Management:
+      - Status:  sudo systemctl status gitea
+      - Restart: sudo systemctl restart gitea
+      - Stop:    sudo systemctl stop gitea
+      - Logs:    sudo journalctl -u gitea -f
+
+      ═══════════════════════════════════════════════════════════════
+      🎉 Gitea is READY TO USE - NO MANUAL CONFIGURATION REQUIRED!
+      ═══════════════════════════════════════════════════════════════

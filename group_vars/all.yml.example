@@ -1,0 +1,47 @@
+# Ejemplo: Configuración con Usuario Admin Predefinido
+# 
+# Para usar esta configuración:
+# 1. Copia este archivo a group_vars/all.yml
+# 2. Personaliza los valores según tus necesidades
+# 3. Ejecuta el playbook normalmente
+
+# Gitea Demo Configuration
+# Using MySQL RDS for production-ready setup
+
+# Gitea version
+gitea_version: "1.25.2"
+
+# Database: MySQL RDS (configured automatically)
+# Production-ready setup with external database
+
+# ========================================================================
+# OPCIONAL: Pre-configurar Usuario Admin
+# ========================================================================
+# Descomenta las siguientes líneas para crear automáticamente un usuario admin
+# durante el deploy. Si no se configuran estas variables, el primer usuario
+# que se registre a través de la web UI será automáticamente admin.
+
+gitea_admin_username: "admin"
+gitea_admin_password: "ChangeThisSecurePassword123!"
+gitea_admin_email: "admin@example.com"
+
+# ========================================================================
+# NOTAS DE SEGURIDAD
+# ========================================================================
+# 1. CAMBIA la contraseña por defecto antes de usar en producción
+# 2. Considera usar Ansible Vault para encriptar las credenciales:
+#    ansible-vault encrypt group_vars/all.yml
+# 3. Después del primer login, el admin debe cambiar su contraseña
+# 4. Para producción, considera usar variables de entorno o AWS Secrets Manager
+
+# ========================================================================
+# CONFIGURACIÓN ALTERNATIVA (Sin Admin Predefinido)
+# ========================================================================
+# Si prefieres NO crear un admin automáticamente, simplemente comenta
+# o elimina las tres variables anteriores (gitea_admin_*).
+#
+# En ese caso:
+# - El primer usuario que se registre será automáticamente admin
+# - DISABLE_REGISTRATION = false (registro abierto)
+# - Cada equipo puede elegir sus propias credenciales
+# - Ideal para ambientes de desarrollo y demo

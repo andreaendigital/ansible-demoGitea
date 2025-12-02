@@ -41,6 +41,7 @@ DEFAULT_KEEP_EMAIL_PRIVATE = false
 DEFAULT_ALLOW_CREATE_ORGANIZATION = true
 DEFAULT_ENABLE_TIMETRACKING = true
 NO_REPLY_ADDRESS           = noreply.localhost
+DEFAULT_ORG_VISIBILITY     = public
 
 [mailer]
 ENABLED = false
@@ -55,3 +56,23 @@ ROOT_PATH = /var/lib/gitea/log
 
 [repository.upload]
 ENABLED = true
+
+[admin]
+; Disable regular (non-admin) users from creating organizations
+DISABLE_REGULAR_ORG_CREATION = false
+
+[openid]
+; Enable OpenID signin
+ENABLE_OPENID_SIGNIN = false
+ENABLE_OPENID_SIGNUP = false
+
+[cron]
+; Enable the cron tasks
+ENABLED = true
+
+[indexer]
+; Repository indexer
+REPO_INDEXER_ENABLED = true
+REPO_INDEXER_PATH = /var/lib/gitea/indexers/repos.bleve
+UPDATE_BUFFER_LEN = 20
+MAX_FILE_SIZE = 1048576
