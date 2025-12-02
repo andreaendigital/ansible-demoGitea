@@ -84,9 +84,9 @@
   template:
     src: app.ini.j2
     dest: /etc/gitea/app.ini
-    owner: root
+    owner: git
     group: git
-    mode: "0660"
+    mode: "0640"
 
 - name: Create Gitea service
   template:
@@ -107,7 +107,7 @@
     GITEA_WORK_DIR: /var/lib/gitea
   register: gitea_migrate
   changed_when: "'Upgrade database schema to latest version' in gitea_migrate.stdout or 'Current database version is the same' not in gitea_migrate.stdout"
-  failed_when: 
+  failed_when:
     - gitea_migrate.rc != 0
     - "'has already been created' not in gitea_migrate.stderr"
 
@@ -138,8 +138,8 @@
   debug:
     var: gitea_immediate_status.stdout_lines
 
-- name: Check Gitea logs for errors
-  command: journalctl -u gitea -n 50 --no-pager
+- name: Check Gitea logs for errors (including all priorities)
+  command: journalctl -u gitea -n 100 --no-pager --all
   register: gitea_logs
   failed_when: false
   changed_when: false
@@ -147,6 +147,34 @@
 - name: Show Gitea logs
   debug:
     var: gitea_logs.stdout_lines
+
+- name: Check for specific error patterns in logs
+  command: journalctl -u gitea -n 100 --no-pager --all --grep "error|Error|ERROR|fatal|Fatal|FATAL|panic"
+  register: gitea_errors
+  failed_when: false
+  changed_when: false
+
+- name: Show specific errors if found
+  debug:
+    var: gitea_errors.stdout_lines
+  when: gitea_errors.stdout_lines is defined and gitea_errors.stdout_lines | length > 0
+
+- name: Check if Gitea log file exists
+  stat:
+    path: /var/lib/gitea/log/gitea.log
+  register: gitea_log_file
+
+- name: Show last 100 lines of Gitea application log
+  command: tail -n 100 /var/lib/gitea/log/gitea.log
+  register: gitea_app_log
+  failed_when: false
+  changed_when: false
+  when: gitea_log_file.stat.exists
+
+- name: Display Gitea application log
+  debug:
+    var: gitea_app_log.stdout_lines
+  when: gitea_log_file.stat.exists and gitea_app_log.stdout_lines is defined
 
 - name: Wait for Gitea to start
   wait_for:
