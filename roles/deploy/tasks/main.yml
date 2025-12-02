@@ -80,13 +80,6 @@
     name: gitea
   register: gitea_service_status
 
-- name: Install monitoring
-  shell: |
-    curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/install.sh
-    sh /tmp/install.sh --realm us1 -- PZuf3J0L2Op_Qj9hpAJzlw
-  args:
-    creates: /etc/otel/collector/agent_config.yaml
-
 - name: Verify Gitea service availability
   uri:
     url: "http://localhost:3000"
@@ -113,7 +106,6 @@
         * sudo systemctl restart gitea
         * sudo systemctl stop gitea
       - Access Gitea at: http://{{ ansible_default_ipv4.address }}:3000
-      - Monitoring: Splunk OpenTelemetry Collector installed
       
       Next Steps:
       1. Open http://{{ ansible_default_ipv4.address }}:3000 in browser

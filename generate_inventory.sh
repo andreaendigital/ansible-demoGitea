@@ -20,7 +20,7 @@ cd ..
 # Generate the inventory.ini file for Ansible
 cat <<EOF > configManagement-carPrice/inventory.ini
 [infraCar]
-ec2-flask ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
+ec2-gitea ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
 EOF
 
 echo "inventory.ini file generated with IP: $EC2_IP"
