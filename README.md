@@ -26,8 +26,7 @@ configManagement-carPrice/
 ├── roles/deploy/                    # Ansible deployment role
 │   ├── tasks/main.yml              # Complete deployment workflow
 │   └── templates/                  # Systemd service templates
-│       ├── backend.service         # Backend API service configuration
-│       └── frontend.service        # Frontend web service configuration
+│       └── gitea.service           # Gitea Git service configuration
 ├── ansible.cfg                     # Ansible configuration settings
 ├── generate_inventory.sh           # Dynamic inventory generation script
 ├── inventory.ini                   # Ansible inventory file (auto-generated)
@@ -77,7 +76,7 @@ curl http://<EC2_IP>:3000
 ### Monitoring Service
 - **Provider**: Splunk OpenTelemetry Collector
 - **Metrics**: System metrics (CPU, memory, disk, network)
-- **Application Metrics**: Custom Flask application metrics
+- **Service Monitoring**: Gitea service health monitoring
 - **Realm**: us1
 
 ## Troubleshooting
@@ -96,8 +95,7 @@ ssh -i ~/.ssh/demoCar-jenkins_key.pem ec2-user@<EC2_IP>
 **Service Start Failures**
 ```bash
 # Check service logs
-ansible infraCar -m shell -a "journalctl -u backend -f"
-ansible infraCar -m shell -a "journalctl -u frontend -f"
+ansible infraCar -m shell -a "journalctl -u gitea -f"
 ```
 
 **Inventory Generation Issues**
