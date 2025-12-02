@@ -1,7 +1,7 @@
  #!/bin/bash
 
 # Navega a la carpeta de Terraform
-cd infra || exit 1
+cd ../tf-infra-demoCar/infra || exit 1
 
 terraform init -reconfigure -backend=true
 
