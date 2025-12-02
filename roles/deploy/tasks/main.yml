@@ -86,7 +86,7 @@
     dest: /etc/gitea/app.ini
     owner: root
     group: git
-    mode: "0640"
+    mode: "0660"
 
 - name: Create Gitea service
   template:
@@ -115,6 +115,13 @@
   debug:
     var: gitea_migrate.stdout_lines
   when: gitea_migrate.stdout_lines is defined
+
+- name: Set app.ini to read-only after migration
+  file:
+    path: /etc/gitea/app.ini
+    owner: root
+    group: git
+    mode: "0640"
 
 - name: Enable and start Gitea service (systemd)
   systemd:
