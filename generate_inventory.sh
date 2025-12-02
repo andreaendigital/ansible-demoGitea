@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# Navega a la carpeta de Terraform
-# En Jenkins: infra/ está al mismo nivel que ansible-demoGitea/
-# En local: ../TF-INFRA-DEMOGITEA/infra
-if [ -d "../infra" ]; then
-  # Contexto Jenkins
-  cd ../infra || exit 1
-else
-  # Contexto local
-  cd ../TF-INFRA-DEMOGITEA/infra || exit 1
-fi
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Navigate to Terraform infra directory
+# Jenkins workspace structure: workspace/Gitea/infra/
+cd "$SCRIPT_DIR/../infra" || exit 1
 
 terraform init -reconfigure -backend=true
 
@@ -22,14 +18,8 @@ if [[ -z "$EC2_IP" ]]; then
   exit 1
 fi
 
-# Return to the project's root
-if [ -d "../../ansible-demoGitea" ]; then
-  # Contexto Jenkins
-  cd ../ansible-demoGitea
-else
-  # Contexto local
-  cd ../../ANSIBLE-DEMOGITEA
-fi
+# Return to ansible directory
+cd "$SCRIPT_DIR" || exit 1
 
 # Generate the inventory.ini file for Ansible
 cat <<EOF2 > inventory.ini
