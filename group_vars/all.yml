@@ -1,8 +1,13 @@
 # Gitea Demo Configuration
-# Using SQLite for simplicity - perfect for demo/development
+# Using MySQL RDS for production-ready setup
 
 # Gitea version
 gitea_version: "1.25.2"
+# Database: MySQL RDS (configured automatically)
+# Production-ready setup with external database
 
-# Database: SQLite (builtin, no configuration needed)
-# Perfect for demo environments and small teams
+# Optional: Create initial admin user automatically
+# Leave commented to create admin through web UI on first access
+# gitea_admin_username: "admin"
+# gitea_admin_password: "changeme"
+# gitea_admin_email: "admin@example.com"
