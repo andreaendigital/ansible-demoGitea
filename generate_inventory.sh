@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navega a la carpeta de Terraform
-cd infra || exit 1
+cd ../TF-INFRA-DEMOGITEA/infra || exit 1
 
 terraform init -reconfigure -backend=true
 
@@ -15,7 +15,7 @@ if [[ -z "$EC2_IP" ]]; then
 fi
 
 # Return to the project's root
-cd ..
+cd ../../ANSIBLE-DEMOGITEA
 
 # Generate the inventory.ini file for Ansible
 cat <<EOF2 > inventory.ini

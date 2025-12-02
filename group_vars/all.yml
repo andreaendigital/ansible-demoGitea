@@ -1,0 +1,8 @@
+# Gitea Demo Configuration
+# Using SQLite for simplicity - perfect for demo/development
+
+# Gitea version
+gitea_version: "1.25.2"
+
+# Database: SQLite (builtin, no configuration needed)
+# Perfect for demo environments and small teams
