@@ -207,13 +207,19 @@ ENABLE_OPENID_SIGNUP = false
    - `app.ini` con todas las variables configuradas
    - Service systemd instalado
 
-6. **Inicio del Servicio**
+6. **Inicialización de Base de Datos**
+
+   - Ejecuta `gitea migrate` para crear tablas MySQL
+   - Verifica que el schema esté actualizado
+   - Esencial cuando `INSTALL_LOCK = true`
+
+7. **Inicio del Servicio**
 
    - Habilitación en systemd
    - Inicio automático
    - Verificación de salud
 
-7. **Creación de Admin (Opcional)**
+8. **Creación de Admin (Opcional)**
    - Si están definidas las variables
    - Usando comando `gitea admin user create`
 

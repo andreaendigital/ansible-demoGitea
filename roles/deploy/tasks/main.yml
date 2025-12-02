@@ -99,6 +99,23 @@
     line: "GITEA_WORK_DIR=/var/lib/gitea"
     create: yes
 
+- name: Initialize Gitea database (migrate)
+  command: /usr/local/bin/gitea migrate -c /etc/gitea/app.ini
+  become: yes
+  become_user: git
+  environment:
+    GITEA_WORK_DIR: /var/lib/gitea
+  register: gitea_migrate
+  changed_when: "'Upgrade database schema to latest version' in gitea_migrate.stdout or 'Current database version is the same' not in gitea_migrate.stdout"
+  failed_when: 
+    - gitea_migrate.rc != 0
+    - "'has already been created' not in gitea_migrate.stderr"
+
+- name: Show migration output
+  debug:
+    var: gitea_migrate.stdout_lines
+  when: gitea_migrate.stdout_lines is defined
+
 - name: Enable and start Gitea service (systemd)
   systemd:
     name: gitea
@@ -110,8 +127,8 @@
   wait_for:
     port: 3000
     host: localhost
-    delay: 5
-    timeout: 60
+    delay: 10
+    timeout: 120
 
 - name: Create initial admin user (optional)
   command: >
