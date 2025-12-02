@@ -1,4 +1,4 @@
- #!/bin/bash
+#!/bin/bash
 
 # Navega a la carpeta de Terraform
 cd infra || exit 1
@@ -14,13 +14,13 @@ if [[ -z "$EC2_IP" ]]; then
   exit 1
 fi
 
-# Return to the project's roots
+# Return to the project's root
 cd ..
 
 # Generate the inventory.ini file for Ansible
-cat <<EOF > configManagement-carPrice/inventory.ini
-[infraCar]
-ec2-flask ansible_host=$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/demoCar-jenkins_key.pem
-EOF
+cat <<EOF2 > inventory.ini
+[infraGitea]
+ec2-instance ansible_host=$EC2_IP ansible_user=ec2-user
+EOF2
 
 echo "inventory.ini file generated with IP: $EC2_IP"
