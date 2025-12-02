@@ -12,11 +12,10 @@ ExecStart=/usr/local/bin/gitea web -c /etc/gitea/app.ini
 Restart=always
 RestartSec=2s
 Environment=USER=git HOME=/home/git GITEA_WORK_DIR=/var/lib/gitea
-# Security settings
+# Security settings - relaxed to allow Gitea to write JWT_SECRET
 PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/lib/gitea /etc/gitea
+# ProtectSystem=strict disabled temporarily - Gitea needs write access to /etc/gitea/app.ini for JWT_SECRET
+# ReadWritePaths=/var/lib/gitea /etc/gitea
 NoNewPrivileges=true
 
 [Install]
