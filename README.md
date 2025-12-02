@@ -1,15 +1,14 @@
-# CarPrice Prediction Application - Ansible Deployment
+# Gitea Git Service - Ansible Deployment
 
 ## Overview
 
-This project provides automated deployment of a Flask-based car price prediction application using Ansible configuration management. The deployment includes a machine learning backend API, web frontend interface, and comprehensive monitoring solution.
+This project provides automated deployment of Gitea, a lightweight Git service, using Ansible configuration management. The deployment includes the Gitea web interface and comprehensive monitoring solution.
 
 ## Architecture
 
-The application follows a microservices architecture with the following components:
+The application consists of the following components:
 
-- **Backend API Service**: Flask REST API serving ML predictions on port 5002
-- **Frontend Web Service**: User interface for car price predictions on port 3000  
+- **Gitea Service**: Self-hosted Git service with web interface on port 3000
 - **Monitoring Stack**: Splunk OpenTelemetry Collector for observability and metrics
 
 ## Prerequisites
@@ -27,8 +26,7 @@ configManagement-carPrice/
 ├── roles/deploy/                    # Ansible deployment role
 │   ├── tasks/main.yml              # Complete deployment workflow
 │   └── templates/                  # Systemd service templates
-│       ├── backend.service         # Backend API service configuration
-│       └── frontend.service        # Frontend web service configuration
+│       └── gitea.service           # Gitea Git service configuration
 ├── ansible.cfg                     # Ansible configuration settings
 ├── generate_inventory.sh           # Dynamic inventory generation script
 ├── inventory.ini                   # Ansible inventory file (auto-generated)
@@ -61,31 +59,24 @@ ansible-playbook playbook.yml
 After successful deployment, verify services are running:
 ```bash
 # Check service status
-ansible infraCar -m shell -a "systemctl status backend frontend"
+ansible infraCar -m shell -a "systemctl status gitea"
 
-# Test API endpoints
-curl http://<EC2_IP>:5002/health
+# Test Gitea service
 curl http://<EC2_IP>:3000
 ```
 
 ## Service Configuration
 
-### Backend API Service
-- **Port**: 5002
-- **Environment**: Production
-- **Runtime**: Python 3 with virtual environment
-- **Auto-restart**: Enabled via systemd
-
-### Frontend Web Service  
+### Gitea Service
 - **Port**: 3000
-- **Dependencies**: Backend API service
-- **Runtime**: Python 3 with virtual environment
+- **User**: gitea system user
+- **Data Directory**: /var/lib/gitea
 - **Auto-restart**: Enabled via systemd
 
 ### Monitoring Service
 - **Provider**: Splunk OpenTelemetry Collector
 - **Metrics**: System metrics (CPU, memory, disk, network)
-- **Application Metrics**: Custom Flask application metrics
+- **Service Monitoring**: Gitea service health monitoring
 - **Realm**: us1
 
 ## Troubleshooting
@@ -104,8 +95,7 @@ ssh -i ~/.ssh/demoCar-jenkins_key.pem ec2-user@<EC2_IP>
 **Service Start Failures**
 ```bash
 # Check service logs
-ansible infraCar -m shell -a "journalctl -u backend -f"
-ansible infraCar -m shell -a "journalctl -u frontend -f"
+ansible infraCar -m shell -a "journalctl -u gitea -f"
 ```
 
 **Inventory Generation Issues**
@@ -125,18 +115,17 @@ cd ../infra && terraform output ec2_public_ip
 
 ### Service Management
 ```bash
-# Restart services
-ansible infraCar -m systemd -a "name=backend state=restarted" --become
-ansible infraCar -m systemd -a "name=frontend state=restarted" --become
+# Restart service
+ansible infraCar -m systemd -a "name=gitea state=restarted" --become
 
 # View service status
-ansible infraCar -m systemd -a "name=backend" --become
+ansible infraCar -m systemd -a "name=gitea" --become
 ```
 
 ### Log Management
 ```bash
 # View application logs
-ansible infraCar -m shell -a "journalctl -u backend --since '1 hour ago'"
+ansible infraCar -m shell -a "journalctl -u gitea --since '1 hour ago'"
 ```
 
 ## Contributing

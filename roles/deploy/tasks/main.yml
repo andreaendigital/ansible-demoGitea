@@ -6,64 +6,81 @@
 
 - name: Install dependencies
   yum:
-    name: [python3, python3-pip, git, curl]
+    name: [git, curl, wget, tar, sqlite]
     state: present
 
-- name: Clone app
-  git:
-    repo: https://github.com/andreaendigital/CarPricePredictor-Demo.git
-    dest: /home/ec2-user/app
-    version: main
-  become_user: ec2-user
+- name: Check Git version
+  command: git --version
+  register: git_version
 
-- name: Create venv
-  command: python3 -m venv /home/ec2-user/app/venv
-  become_user: ec2-user
+- name: Create git group
+  group:
+    name: git
+    system: yes
 
-- name: Install app
-  pip:
-    name: /home/ec2-user/app
-    virtualenv: /home/ec2-user/app/venv
-    editable: yes
-    extra_args: "[dev]"
-  become_user: ec2-user
+- name: Create git user (following official guide)
+  user:
+    name: git
+    system: yes
+    shell: /bin/bash
+    comment: 'Git Version Control'
+    group: git
+    home: /home/git
+    create_home: yes
 
-- name: Backend service
+- name: Create required directory structure
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: '/var/lib/gitea', owner: 'git', group: 'git', mode: '0750' }
+    - { path: '/var/lib/gitea/custom', owner: 'git', group: 'git', mode: '0750' }
+    - { path: '/var/lib/gitea/data', owner: 'git', group: 'git', mode: '0750' }
+    - { path: '/var/lib/gitea/log', owner: 'git', group: 'git', mode: '0750' }
+    - { path: '/etc/gitea', owner: 'root', group: 'git', mode: '0770' }
+
+- name: Download Gitea binary (v1.25.2)
+  get_url:
+    url: https://dl.gitea.com/gitea/1.25.2/gitea-1.25.2-linux-amd64
+    dest: /usr/local/bin/gitea
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Create Gitea service
   template:
-    src: backend.service
-    dest: /etc/systemd/system/backend.service
+    src: gitea.service
+    dest: /etc/systemd/system/gitea.service
 
-- name: Frontend service
-  template:
-    src: frontend.service
-    dest: /etc/systemd/system/frontend.service
+- name: Set GITEA_WORK_DIR environment
+  lineinfile:
+    path: /etc/environment
+    line: 'GITEA_WORK_DIR=/var/lib/gitea'
+    create: yes
 
-- name: Start services
+- name: Enable and start Gitea service (systemd)
   systemd:
-    name: "{{ item }}"
+    name: gitea
     enabled: yes
     state: started
     daemon_reload: yes
-  loop: [backend, frontend]
 
-- name: Install monitoring
-  shell: |
-    curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/install.sh
-    sh /tmp/install.sh --realm us1 -- PZuf3J0L2Op_Qj9hpAJzlw
-  args:
-    creates: /etc/otel/collector/agent_config.yaml
+- name: Wait for Gitea to start
+  wait_for:
+    port: 3000
+    host: localhost
+    delay: 5
+    timeout: 60
 
-- name: Verify backend API endpoint availability
-  uri:
-    url: "http://localhost:5002/health"
-    method: GET
-    status_code: [200, 404]
-    timeout: 10
-  retries: 5
-  delay: 10
-  register: backend_health
-  
-- name: Verify frontend web service availability  
+- name: Verify Gitea service status
+  systemd:
+    name: gitea
+  register: gitea_service_status
+
+- name: Verify Gitea service availability
   uri:
     url: "http://localhost:3000"
     method: GET
@@ -71,12 +88,31 @@
     timeout: 10
   retries: 5
   delay: 10
-  register: frontend_health
+  register: gitea_health
 
 - name: Display deployment status summary
   debug:
     msg: |
-      Deployment Status:
-      - Backend API (5002): {{ 'HEALTHY' if backend_health.status == 200 else 'STARTING' }}
-      - Frontend Web (3000): {{ 'HEALTHY' if frontend_health.status == 200 else 'STARTING' }}
-      - Monitoring: Splunk OpenTelemetry Collector installed
+      Gitea Deployment Complete!
+      - Gitea Service (3000): {{ 'HEALTHY' if gitea_health.status == 200 else 'STARTING' }}
+      - SystemD Service: {{ gitea_service_status.status.ActiveState }}
+      - Version: 1.25.2
+      - User: git (system user)
+      - Data Directory: /var/lib/gitea
+      - Config: /etc/gitea/app.ini
+      - Database: SQLite (builtin)
+      - Service Management:
+        * sudo systemctl status gitea
+        * sudo systemctl restart gitea
+        * sudo systemctl stop gitea
+      - Access Gitea at: http://{{ ansible_default_ipv4.address }}:3000
+      
+      Next Steps:
+      1. Open http://{{ ansible_default_ipv4.address }}:3000 in browser
+      2. Complete initial setup:
+         * Database: SQLite (already configured)
+         * Admin user: Create your admin account
+         * Site settings: Configure as needed
+      3. Start using your Git service!
+      
+      Service runs automatically at boot via systemd
