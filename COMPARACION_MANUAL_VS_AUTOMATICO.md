@@ -69,12 +69,19 @@ ansible-playbook playbook.yml
 - ✅ Configura auto-restart en fallos
 - ✅ Establece variables de entorno
 
-#### 6. **Usuario Admin (Opcional)** 👤
+#### 6. **Inicialización de Base de Datos** 💾
+
+- ✅ Ejecuta `gitea migrate` automáticamente
+- ✅ Crea todas las tablas MySQL necesarias
+- ✅ Verifica schema actualizado
+- ✅ Maneja errores de duplicados
+
+#### 7. **Usuario Admin (Opcional)** 👤
 
 - ✅ Crea usuario admin si está configurado
 - ✅ O permite que primer usuario sea admin
 
-#### 7. **Verificación** ✓
+#### 8. **Verificación** ✓
 
 - ✅ Espera a que Gitea esté disponible
 - ✅ Verifica salud del servicio

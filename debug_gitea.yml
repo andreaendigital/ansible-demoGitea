@@ -1,0 +1,67 @@
+---
+- name: Debug Gitea deployment
+  hosts: all
+  become: yes
+  tasks:
+    - name: Check if Gitea binary exists
+      stat:
+        path: /usr/local/bin/gitea
+      register: gitea_binary
+
+    - name: Show Gitea binary info
+      debug:
+        msg: "Gitea binary exists: {{ gitea_binary.stat.exists }}, executable: {{ gitea_binary.stat.executable | default('N/A') }}"
+
+    - name: Check Gitea service status
+      command: systemctl status gitea
+      register: gitea_status
+      failed_when: false
+
+    - name: Show service status
+      debug:
+        var: gitea_status.stdout_lines
+
+    - name: Check Gitea logs
+      command: journalctl -u gitea -n 50 --no-pager
+      register: gitea_logs
+      failed_when: false
+
+    - name: Show Gitea logs
+      debug:
+        var: gitea_logs.stdout_lines
+
+    - name: Check if port 3000 is in use
+      shell: netstat -tlnp | grep 3000 || echo "Port 3000 not in use"
+      register: port_check
+      failed_when: false
+
+    - name: Show port status
+      debug:
+        var: port_check.stdout_lines
+
+    - name: Check app.ini exists
+      stat:
+        path: /etc/gitea/app.ini
+      register: app_ini
+
+    - name: Show app.ini status
+      debug:
+        msg: "app.ini exists: {{ app_ini.stat.exists }}"
+
+    - name: Check directory permissions
+      shell: ls -la /var/lib/gitea && ls -la /etc/gitea
+      register: perms
+      failed_when: false
+
+    - name: Show permissions
+      debug:
+        var: perms.stdout_lines
+
+    - name: Test Gitea binary manually
+      shell: sudo -u git /usr/local/bin/gitea --version
+      register: gitea_version
+      failed_when: false
+
+    - name: Show Gitea version
+      debug:
+        var: gitea_version.stdout_lines
