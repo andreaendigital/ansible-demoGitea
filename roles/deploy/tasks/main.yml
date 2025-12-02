@@ -116,12 +116,10 @@
     var: gitea_migrate.stdout_lines
   when: gitea_migrate.stdout_lines is defined
 
-- name: Set app.ini to read-only after migration
-  file:
-    path: /etc/gitea/app.ini
-    owner: root
-    group: git
-    mode: "0640"
+# Keep app.ini writable (0660) - Gitea needs to write JWT_SECRET on each startup
+# This is necessary because Gitea generates/updates JWT_SECRET dynamically
+# Security note: Only git group can write, root owns the file
+# After Gitea is stable, this can be changed to 0640 if JWT_SECRET is pre-configured
 
 - name: Enable and start Gitea service (systemd)
   systemd:
@@ -129,6 +127,26 @@
     enabled: yes
     state: started
     daemon_reload: yes
+
+- name: Check Gitea service status immediately
+  command: systemctl status gitea
+  register: gitea_immediate_status
+  failed_when: false
+  changed_when: false
+
+- name: Show immediate service status
+  debug:
+    var: gitea_immediate_status.stdout_lines
+
+- name: Check Gitea logs for errors
+  command: journalctl -u gitea -n 50 --no-pager
+  register: gitea_logs
+  failed_when: false
+  changed_when: false
+
+- name: Show Gitea logs
+  debug:
+    var: gitea_logs.stdout_lines
 
 - name: Wait for Gitea to start
   wait_for:
